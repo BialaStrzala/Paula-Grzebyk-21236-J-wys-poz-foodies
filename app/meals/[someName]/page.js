@@ -1,7 +1,7 @@
 'use client'
 import { usePathname, useParams } from 'next/navigation'
 
-export default async function Home() {
+export default function Home() {
     const pathname = usePathname()
     return (
       <main>
