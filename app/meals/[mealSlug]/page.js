@@ -2,6 +2,7 @@ import { getMeal } from '@/lib/meals';
 import classes from './page.module.css';
 import { Suspense } from 'react';
 import Image from 'next/image';
+import { notFound } from 'next/navigation;'
 
 async function Meal({ slug }) {
   const meal = await getMeal(slug);
