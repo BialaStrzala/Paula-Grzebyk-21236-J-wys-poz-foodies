@@ -1,5 +1,11 @@
-const sql = require('better-sqlite3');
-const db = sql('meals.db');
+require('dotenv').config();
+
+const { createClient } = require('@libsql/client');
+
+const turso = createClient({
+  url: process.env.TURSO_DATABASE_URL,
+  authToken: process.env.TURSO_AUTH_TOKEN,
+});
 
 const dummyMeals = [
   {
@@ -164,36 +170,26 @@ const dummyMeals = [
   },
 ];
 
-db.prepare(`
-   CREATE TABLE IF NOT EXISTS meals (
-       id INTEGER PRIMARY KEY AUTOINCREMENT,
-       slug TEXT NOT NULL UNIQUE,
-       title TEXT NOT NULL,
-       image TEXT NOT NULL,
-       summary TEXT NOT NULL,
-       instructions TEXT NOT NULL,
-       creator TEXT NOT NULL,
-       creator_email TEXT NOT NULL
-    )
-`).run();
-
-async function initData() {
-  const stmt = db.prepare(`
-      INSERT INTO meals VALUES (
-         null,
-         @slug,
-         @title,
-         @image,
-         @summary,
-         @instructions,
-         @creator,
-         @creator_email
+(async () => {
+  await turso.execute(`
+     CREATE TABLE IF NOT EXISTS meals (
+         id INTEGER PRIMARY KEY AUTOINCREMENT,
+         slug TEXT NOT NULL UNIQUE,
+         title TEXT NOT NULL,
+         image TEXT NOT NULL,
+         summary TEXT NOT NULL,
+         instructions TEXT NOT NULL,
+         creator TEXT NOT NULL,
+         creator_email TEXT NOT NULL
       )
-   `);
+  `);
 
   for (const meal of dummyMeals) {
-    stmt.run(meal);
+    await turso.execute({
+      sql: 'INSERT INTO meals VALUES (null, ?, ?, ?, ?, ?, ?, ?)',
+      args: [meal.slug, meal.title, meal.image, meal.summary, meal.instructions, meal.creator, meal.creator_email]
+    });
   }
-}
 
-initData();
+  console.log('Database initialized with dummy data');
+})();
