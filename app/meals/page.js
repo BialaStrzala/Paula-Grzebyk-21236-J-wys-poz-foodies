@@ -5,6 +5,7 @@ import { getMeals } from '@/lib/meals';
 import { Suspense } from 'react';
 
 export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 async function Meals(){
   const meals = await getMeals();
