@@ -1,21 +1,38 @@
 import classes from './page.module.css';
 import { submitMeal } from '@/lib/meals';
+import { put } from '@vercel/blob';
+import { redirect } from 'next/navigation';
 
 export default function ShareMealPage() {
 
   async function submitForm(formData){
     'use server'
+    
+    const file = formData.get('file');
+    let imageUrl = '/images/burger.jpg';
+    
+    if (file && file.size > 0) {
+      // Vercel Blob
+      const blob = await put(file.name, file, { access: 'public' });
+      imageUrl = blob.url;
+    }
+    
+    const title = formData.get('title');
+    const slug = title.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+    
     const rawFormData = {
-      title: formData.get('title'),
-      slug: '/imgages/' + formData.get('title'),
-      image: formData.get('file'),
+      title: title,
+      slug: slug,
+      image: imageUrl,
       summary: formData.get('summary'),
       instructions: formData.get('instructions'),
       creator: formData.get('name'),
       creator_email: formData.get('email')
     }
-    submitMeal(rawFormData);
-    console.log('submitMeal');
+    
+    await submitMeal(rawFormData);
+    console.log('Meal submitted successfully');
+    redirect('/meals');
   }
 
   return (
@@ -27,7 +44,7 @@ export default function ShareMealPage() {
         <p>Or any other meal you feel needs sharing!</p>
       </header>
       <main className={classes.main}>
-        <form className={classes.form} method='post' action={submitForm}>
+        <form className={classes.form} method='post' action={submitForm} encType="multipart/form-data">
           <div className={classes.row}>
             <p>
               <label htmlFor="name">Your name</label>
@@ -55,8 +72,10 @@ export default function ShareMealPage() {
               required
             ></textarea>
           </p>
-          IMAGE PICKER
-          <input type="file" name="file"/>
+          <p>
+            <label htmlFor="file">Meal Image</label>
+            <input type="file" id="file" name="file" accept="image/*" required />
+          </p>
           <p className={classes.actions}>
             <button type="submit">Share Meal</button>
           </p>
